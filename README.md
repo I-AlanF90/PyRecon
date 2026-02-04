@@ -10,5 +10,5 @@ Port-driven recon orchestrator:
 pip install -r requirements.txt
 
 ## Run
-python3 -m pyrecon.cli
-python3 PyRecon.py
+- python3 -m pyrecon.cli
+- python3 PyRecon.py
