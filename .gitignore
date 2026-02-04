@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.dist/
+build/
+venv/
+.venv/
+
+# Outputs
+scans/
+*.nmap
+*.gnmap
+*.xml
+*.txt
+*.log
+
+# OS
+.DS_Store
