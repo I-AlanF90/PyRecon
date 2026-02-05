@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyrecon"
+version = "0.1.0"
+description = "PyRecon recon helper"
+requires-python = ">=3.10"
+dependencies = [
+  "rich>=13.0"
+]
+
+[project.scripts]
+pyrecon = "pyrecon.cli:main"
