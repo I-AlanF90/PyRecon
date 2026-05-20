@@ -69,56 +69,99 @@ def main() -> None:
         console.print("[yellow]No open ports parsed. Skipping thorough/vuln scans.[/yellow]")
 
     # Feroxbuster menu
-    if Confirm.ask("Run Feroxbuster?"):
-        urls = guess_web_urls(target, open_ports)
-        if not urls:
-            console.print("[yellow]No common web ports detected. Enter a URL manually.[/yellow]")
-            manual = Prompt.ask("URL (e.g., http://target:8080)").strip()
-            urls = [manual] if manual else []
+if Confirm.ask("Run Feroxbuster?"):
+    urls = guess_web_urls(target, open_ports)
+    if not urls:
+        console.print("[yellow]No common web ports detected. Enter a URL manually.[/yellow]")
+        manual = Prompt.ask("URL (e.g., http://target:8080)").strip()
+        urls = [manual] if manual else []
 
-        if urls:
-            console.print("\n[bold cyan]Web targets:[/bold cyan]")
-            for i, u in enumerate(urls, 1):
-                console.print(f"  [bold]{i}[/bold]. {u}")
+    if urls:
+        console.print("\n[bold cyan]Web targets:[/bold cyan]")
+        for i, u in enumerate(urls, 1):
+            console.print(f"  [bold]{i}[/bold]. {u}")
 
-            pick = Prompt.ask("Choose (1 or 1,2 or 'all')", default="all").strip().lower()
-            if pick != "all":
-                chosen = []
-                for part in pick.split(","):
-                    part = part.strip()
-                    if part.isdigit():
-                        idx = int(part)
-                        if 1 <= idx <= len(urls):
-                            chosen.append(urls[idx - 1])
-                urls = chosen if chosen else urls
+        pick = Prompt.ask("Choose (1 or 1,2 or 'all')", default="all").strip().lower()
+        if pick != "all":
+            chosen = []
+            for part in pick.split(","):
+                part = part.strip()
+                if part.isdigit():
+                    idx = int(part)
+                    if 1 <= idx <= len(urls):
+                        chosen.append(urls[idx - 1])
+            urls = chosen if chosen else urls
 
-            wordlists = {
-                "1": "/usr/share/seclists/Discovery/Web-Content/common.txt",
-                "2": "/usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt",
-                "3": "/usr/share/wordlists/dirb/common.txt",
-                "4": "CUSTOM",
-            }
+        wordlists = {
+            "1": "/usr/share/seclists/Discovery/Web-Content/common.txt",
+            "2": "/usr/share/seclists/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt",
+            "3": "/usr/share/wordlists/dirb/common.txt",
+            "4": "/usr/share/seclists/Discovery/Web-Content/big.txt",
+            "5": "/usr/share/wordlists/dirb/big.txt",
+            "6": "/usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt",
+            "7": "/usr/share/seclists/Discovery/Web-Content/raft-medium-files.txt",
+            "8": "CUSTOM",
+        }
 
-            wl_table = Table(title="Ferox Wordlists", show_lines=True)
-            wl_table.add_column("Option", style="bold")
-            wl_table.add_column("Path", style="green")
-            for k, v in wordlists.items():
-                wl_table.add_row(k, v)
-            console.print(wl_table)
+        wl_table = Table(title="Ferox Wordlists", show_lines=True)
+        wl_table.add_column("Option", style="bold")
+        wl_table.add_column("Path", style="green")
 
-            wl_choice = Prompt.ask("Pick wordlist option", choices=list(wordlists.keys()), default="1")
-            wl_path = wordlists[wl_choice]
-            if wl_path == "CUSTOM":
-                wl_path = Prompt.ask("Enter full path to wordlist").strip()
+        for k, v in wordlists.items():
+            wl_table.add_row(k, v)
 
-            threads = IntPrompt.ask("Threads", default=50)
-            add_ext = Confirm.ask("Add extensions? (php,asp,aspx,jsp,txt,bak)")
-            extensions = "php,asp,aspx,jsp,txt,bak" if add_ext else None
+        console.print(wl_table)
 
-            opts = FeroxOptions(wordlist=wl_path, depth=2, threads=threads, extensions=extensions)
-            run_ferox(urls, base_dir, opts)
-        else:
-            console.print("[red]No URLs provided. Skipping Feroxbuster.[/red]")
+        wl_choice = Prompt.ask(
+            "Pick wordlist option",
+            choices=list(wordlists.keys()),
+            default="1"
+        )
+
+        wl_path = wordlists[wl_choice]
+
+        if wl_path == "CUSTOM":
+            wl_path = Prompt.ask("Enter full path to wordlist").strip()
+
+        threads = IntPrompt.ask("Threads", default=50)
+
+        console.print(
+            Panel.fit(
+                "[bold cyan]Extension Examples[/bold cyan]\n\n"
+                "php\n"
+                "php,txt,bak\n"
+                "aspx,config\n"
+                "jsp\n\n"
+                "[dim]Leave blank for none[/dim]",
+                border_style="cyan"
+            )
+        )
+
+        ext_input = Prompt.ask(
+            "Extensions (comma separated)",
+            default=""
+        ).strip()
+
+        extensions = None
+
+        if ext_input:
+            extensions = ",".join(
+                [ext.strip() for ext in ext_input.split(",") if ext.strip()]
+            )
+
+        depth = IntPrompt.ask("Recursion depth", default=2)
+
+        opts = FeroxOptions(
+            wordlist=wl_path,
+            depth=depth,
+            threads=threads,
+            extensions=extensions
+        )
+
+        run_ferox(urls, base_dir, opts)
+
+    else:
+        console.print("[red]No URLs provided. Skipping Feroxbuster.[/red]")
 
     # Nuclei toggle (basic)
     if Confirm.ask("Run Nuclei?"):
